@@ -2,6 +2,7 @@ package main
 
 import (
 	"os"
+	"os/user"
 
 	"github.com/spf13/cobra"
 
@@ -29,8 +30,17 @@ func init() {
 
 	RootCLI.Flags().BoolVar(&agentConfig.GenerateRSAKey, "generate-key", false, "generate RSA key pair (default: false)")
 	RootCLI.Flags().BoolVar(&agentConfig.DisableProxy, "no-proxy", false, "disable forwarding to an upstream agent (default: false)")
-	RootCLI.Flags().StringSliceVar(&agentConfig.ValidPrincipals, "valid-principals", []string{os.Getenv("USER")}, "valid principals for Vault key signing")
+	RootCLI.Flags().StringSliceVar(&agentConfig.ValidPrincipals, "valid-principals", getUser(), "valid principals for Vault key signing")
 	RootCLI.Flags().StringVar(&agentConfig.VaultSigningUrl, "vault-signing-url", "", "HashiCorp Vault url to sign SSH keys")
+}
+
+func getUser() []string {
+	currentUser, err := user.Current()
+	if err != nil {
+		return []string{os.Getenv("USER")}
+	}
+
+	return []string{currentUser.Username}
 }
 
 func shellRunE(cmd *cobra.Command, args []string) error {
